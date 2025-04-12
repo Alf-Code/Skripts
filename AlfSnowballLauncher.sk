@@ -1,0 +1,118 @@
+options:
+
+# ==== Main Options ====
+
+	SnowballLauncherItem: carrot on a stick      # Default is carrot on a stick
+	SnowballLauncherName: &b&lSnowball Launcher      # Default is &b&lSnowball Launcher
+	SnowballLauncherCooldownTime: 20 seconds      # Default is 20 seconds
+	SnowballLauncherSpeed: 2.5      # Default is 2.5
+	SnowballLauncherDamage: 4 # Default is 4 (Hearts)
+	SnowballLauncherRadius: 4 # Default is 4 (This is the radius of the initial impact)
+	TNTExplosionRadius: 4 # Default is 4
+
+
+# ==== Side-Features ====
+
+	HaveABypassPermission: true 
+	SummonSafeTNT: true
+	SummonFireworkBall: true
+	NumberOfFireworkAndTNT: 3 # Default is 3
+
+# ==== Other Technical Stuff ====
+
+	SnowballLauncherSoundEffect: entity.snowball.throw      # Default is entity.snowball.throw
+	SnowballLauncherSoundEffectVolume: 0.75      # Default is 0.75
+	SnowballLauncherSoundEffectPitch: 0.125      # Default is 0.125
+	SnowballLauncherBypassPermission: SnowballLauncher.Cooldown.Bypass      # Default is SnowballLauncher.Cooldown.Bypass	
+
+
+
+
+# |========================================================================================================================================================================================|
+# |========================================================================================================================================================================================|
+# |========================================================================================================================================================================================|
+# |========================================================================================================================================================================================|
+
+
+
+on right click with {@SnowballLauncherItem}:
+	if name of player's tool = "{@SnowballLauncherName}":
+		cancel event
+		if {@HaveABypassPermission} is true:
+			if player has permission "{@SnowballLauncherBypassPermission}":
+				make the player shoot a snowball at speed {@SnowballLauncherSpeed}
+				play sound "{@SnowballLauncherSoundEffect}" with volume {@SnowballLauncherSoundEffectVolume} with pitch {@SnowballLauncherSoundEffectPitch} to player
+				set {SnowballLauncherCooldown::%player's uuid%} to now		
+			else:
+				if {SnowballLauncherCooldown::%player's uuid%} isn't set:
+
+			
+					make the player shoot a snowball at speed {@SnowballLauncherSpeed}
+					play sound "{@SnowballLauncherSoundEffect}" with volume {@SnowballLauncherSoundEffectVolume} with pitch {@SnowballLauncherSoundEffectPitch} to player
+					set {SnowballLauncherCooldown::%player's uuid%} to now
+				else if difference between {SnowballLauncherCooldown::%player's uuid%} and now >= {@SnowballLauncherCooldownTime}:
+					make the player shoot a snowball at speed {@SnowballLauncherSpeed}
+					play sound "{@SnowballLauncherSoundEffect}" with volume {@SnowballLauncherSoundEffectVolume} with pitch {@SnowballLauncherSoundEffectPitch} to player
+					set {SnowballLauncherCooldown::%player's uuid%} to now
+			
+				else:
+					set {_sballtimediff} to difference between {SnowballLauncherCooldown::%player's uuid%} and now
+					set {_sballcooldown} to {@SnowballLauncherCooldownTime} seconds - {_sballtimediff}
+					send "&cYou cannot use this item for &e%{_sballcooldown}%&c." to player
+					
+		else if {SnowballLauncherCooldown::%player's uuid%} isn't set:
+			make the player shoot a snowball at speed {@SnowballLauncherSpeed}
+			play sound "{@SnowballLauncherSoundEffect}" with volume {@SnowballLauncherSoundEffectVolume} with pitch {@SnowballLauncherSoundEffectPitch} to player
+			set {SnowballLauncherCooldown::%player's uuid%} to now
+		else if difference between {SnowballLauncherCooldown::%player's uuid%} and now >= {@SnowballLauncherCooldownTime}:
+			make the player shoot a snowball at speed {@SnowballLauncherSpeed}
+			play sound "{@SnowballLauncherSoundEffect}" with volume {@SnowballLauncherSoundEffectVolume} with pitch {@SnowballLauncherSoundEffectPitch} to player
+			set {SnowballLauncherCooldown::%player's uuid%} to now
+			
+		else:
+			set {_sballtimediff} to difference between {SnowballLauncherCooldown::%player's uuid%} and now
+			set {_sballcooldown} to {@SnowballLauncherCooldownTime} seconds - {_sballtimediff}
+			send "&cYou cannot use this item for &e%{_sballcooldown}%&c." to player
+			
+			
+on projectile hit:
+	event-projectile is snowball
+	metadata value "launcherball" of event-projectile is true
+	cancel event
+	loop all players in radius {@SnowballLauncherRadius} of the projectile:
+		damage loop-player by {@SnowballLauncherDamage} hearts with fake cause projectile 
+		play sound "entity.dragon_fireball.explode" with volume 0.5 with pitch 1 to loop-player
+		set {_v} to vector between projectile and loop-player
+		push loop-player {_v} at speed 1
+		push loop-player upwards at speed 1.5
+		send "&cYou were blasted by a {@SnowballLauncherName} &cand lost {@SnowballLauncherDamage} hearts!" to loop-player
+	loop {@NumberOfFireworkAndTNT} times:
+		wait 0.2 seconds
+		set {_randomfirework} to a random number between -4 and 4
+		set {_launchlocation} to projectile's location
+		add {_randomfirework} to {_launchlocation}'s x-coordinate
+		add {_randomfirework} to {_launchlocation}'s z-coordinate
+		add 2 to {_launchlocation}'s y-coordinate
+		if block at {_launchlocation} is air or light or cobweb or water:
+			if {@SummonSafeTNT} is true:
+				spawn primed tnt at {_launchlocation}
+			if {@SummonFireworkBall} is true:
+				launch ball large colored red, purple and white fading to light green and black at {_launchlocation} with duration 1
+		
+on explosion:
+	event-entity is tnt
+	loop exploded blocks:
+		remove loop-block from exploded blocks
+	cancel event
+	play sound "entity.generic.explode" to all players where [distance between player and event-entity is less than 10]
+	loop all entities in radius {@TNTExplosionRadius} of the entity:
+		damage loop-entity by 2 heart
+		loop-entity isn't primed tnt
+		set {_v} to vector between entity and loop-entity
+		push loop-entity {_v} at speed 1
+		push loop-entity upwards at speed 0.5
+		
+on shoot:
+	event-projectile is a snowball:
+		if name of shooter's tool = "{@SnowballLauncherName}":
+			set metadata value "launcherball" of event-projectile to true

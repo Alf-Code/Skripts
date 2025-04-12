@@ -1,0 +1,31 @@
+
+on join:
+	set join message to "&aWelcome &e&l%player%&a&l!"
+	wait 2 ticks
+	send "&bWelcome &f%player% &b in chat in the next 10 seconds for a &c&lGear Key&b!" to all players where [input is not player]
+	set {WelcomeRewardTimer} to now
+	set {WelcomeRewardPlayer} to player
+	clear {gotwelcomereward::*}
+	
+on chat:
+	if message contains "welcome":
+		if message contains "%{WelcomeRewardPlayer}%":
+			if difference between {WelcomeRewardTimer} and now < 10 seconds:
+				if player isn't {WelcomeRewardPlayer}:
+					if {gotwelcomereward::%player's uuid%} is not set:
+						replace all "welcome" in message with "&d&lWelcome&r"
+						execute console command "/crates key give %player% gear 1"	
+						send "&aThank you for welcoming our new players!" to player
+						set {gotwelcomereward::%player's uuid%} to true
+					else:
+						cancel event
+						send "&cYou may only claim welcome rewards once per player." to player
+				else:
+					cancel event
+					send "&cYou may not welcome yourself, sorry." to player
+		else:
+			cancel event
+			send "&cSorry, you were too slow." to player
+						
+
+

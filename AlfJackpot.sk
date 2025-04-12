@@ -1,0 +1,185 @@
+
+options:
+	JackpotTimeInterval: 30 # Minutes
+	
+	JackpotDuration: 20 # Seconds
+	
+	HaveAutoJoinJackpotPermission: true 
+	AutoJoinJackpotPermission: jackpot.automaticjoin
+
+
+command /jackpot:
+	aliases: /joinjackpot, /jj, /pot
+	trigger:
+		if {Jackpot} is false:
+			send "&cThe jackpot is not currently running." to player
+		else if {InJackpot::%player's uuid%} is true:
+			send "&cYou have already joined the current jackpot." to player
+		else:
+			JoinJackpot(player)
+			
+command /jackpotrewards:
+	aliases: /jpotrewards, /jrewards
+	trigger:
+		open chest inventory with 5 rows named "&aJackpot Rewards" to player
+		set slots (integers between 0 and 8) of player's current inventory to light blue stained glass pane named " "
+		set slots (integers between 36 and 44) of player's current inventory to light blue stained glass pane named " "
+		set slots 9, 18, 27, 17, 26, 35 of player's current inventory to light blue stained glass pane named " "
+		set slot 40 of player's current inventory to red dye named "&cBack" with lore "", "&f| &eClick to exit the GUI"
+		set {_slot} to 10
+		set {_chance} to (100 / size of {JackpotRewards::*})
+		loop {JackpotRewards::*}:
+			set slot {_slot} of player's current inventory to loop-value with lore "", "&cChance&f: &a%{_chance}%%%"
+			if {_slot} < 34:
+				add 1 to {_slot}
+		
+command /jackpotadmin:
+	aliases: /jpotadmin
+	permission: jackpot.admin
+	permission message: &cYou do not have permission to perform this command.
+	trigger:
+		open chest inventory with 5 rows named "&e&lJackpot Admin GUI" to player
+		set slots (integers between 0 and 8) of player's current inventory to light blue stained glass pane named " "
+		set slots (integers between 36 and 44) of player's current inventory to light blue stained glass pane named " "
+		set slots 9, 18, 27, 17, 26, 35 of player's current inventory to light blue stained glass pane named " "
+		set slot 22 of player's current inventory to diamond named "&aManage Rewards" with lore "", "&f| &eClick to manage jackpot rewards"
+	# 	set slot 31 of player's current inventory to clock named "&aChange time intervals" with lore "", "&f| &eClick to manage jackpot time intervals"
+
+on skript start: 
+	set {Jackpot} to false
+	clear {CurrentJackpotters::*}
+	clear {InJackpot::*}
+	wait {@JackpotTimeInterval} minutes
+	StartJackpot()
+
+
+function StartJackpot():
+	set {Jackpot} to true
+	broadcast "&e&l Jackpot &f| &aTHE JACKPOT HAS BEGUN! &bJoin the jackpot to gain a chance at winning a reward! &7(&6/jackpot&7)"
+	if {@HaveAutoJoinJackpotPermission} is true:
+		loop all players where [input has permission "{@AutoJoinJackpotPermission}"]:
+			add loop-player to {CurrentJackpotters::*}
+			set {InJackpot::%loop-player's uuid%} to true
+			broadcast "&e&l Jackpot &f| %loop-player% &dhas joined the &ejackpot&d! &b(auto)"
+	wait {@JackpotDuration} seconds
+	EndJackpot()
+		
+function JoinJackpot(p: player):
+	set {InJackpot::%{_p}'s uuid%} to true
+	add {_p} to {CurrentJackpotters::*}
+	broadcast "&e&l Jackpot &f| %{_p}'s display name% &dhas joined the &ejackpot&d! &b(command)"
+	
+
+function EndJackpot():
+	set {Jackpot} to false
+	if {CurrentJackpotters::*} is set:
+		set {_JackpotWinner} to random element out of {CurrentJackpotters::*}
+	set {_JackpotReward} to random element out of {JackpotRewards::*}
+	if {_JackpotWinner} is set:
+		broadcast "&f%{_JackpotWinner}% &bwon the jackpot and received a &f%{_JackpotReward}%!"
+		give {_JackpotWinner} {_JackpotReward}
+	else:
+		broadcast "&cNobody joined the jackpot!"
+	wait 5 ticks
+	clear {CurrentJackpotters::*}
+	clear {InJackpot::*}
+	wait {@JackpotTimeInterval} minutes
+	StartJackpot()
+	
+on inventory click:
+	if name of event-inventory = "&e&lJackpot Admin GUI":
+		cancel event
+		set {_c} to index of clicked slot
+		if {_c} = 22:
+			play sound "ui.button.click" to player
+			open chest inventory with 5 rows named "&cJackpot Rewards &f| &4Admin" to player
+			set slots (integers between 0 and 8) of player's current inventory to light blue stained glass pane named " "
+			set slots (integers between 36 and 44) of player's current inventory to light blue stained glass pane named " "
+			set slots 9, 18, 27, 17, 26, 35 of player's current inventory to light blue stained glass pane named " "
+			set slot 4 of player's current inventory to lime dye named "&aSave Rewards" with lore "", "&f| &eClick to save jackpot rewards"
+			set slot 40 of player's current inventory to red dye named "&cBack" with lore "", "&f| &eClick to return to last page"
+			set {_slot} to 10
+			loop {JackpotRewards::*}:
+				set slot {_slot} of player's current inventory to loop-value
+				if {_slot} < 34:
+					add 1 to {_slot}
+		if {_c} = 100:
+			play sound "ui.button.click" to player
+			open chest inventory with 5 rows named "&aJackpot Timings" to player
+			set slots (integers between 0 and 8) of player's current inventory to light blue stained glass pane named " "
+			set slots (integers between 36 and 44) of player's current inventory to light blue stained glass pane named " "
+			set slots 9, 18, 27, 17, 26, 35 of player's current inventory to light blue stained glass pane named " "
+			set slot 40 of player's current inventory to red dye named "&cBack" with lore "", "&f| &eClick to return to last page"
+			set slot 22 of player's current inventory to oak sign named "&bEdit interval between jackpots" with lore "", "&f| &eClick to edit the time interval between jackpots", "", "&9Current Value: &f%{JackpotTimeInterval}% &7(minutes)"
+	else if name of event-inventory = "&cJackpot Rewards &f| &4Admin":
+		if event-item is light blue stained glass pane named " ":
+			cancel event
+		else if event-item is red dye named "&cBack":
+			cancel event
+			play sound "ui.button.click" to player
+			execute player command "/jackpotadmin"
+		else if event-item is lime dye named "&aSave Rewards":
+			cancel event
+			play sound "ui.button.click" to player
+			clear {JackpotRewards::*}
+			loop 25 times:
+				set {_slot} to (loop-number + 9)
+				if slot {_slot} of player's current inventory isn't air:
+					if slot {_slot} of player's current inventory isn't light blue stained glass pane named " ":
+						add slot {_slot} of player's current inventory to {JackpotRewards::*}
+			play sound "entity.player.levelup" to player
+			send "&aJackpot rewards successfully saved." to player
+	else if name of event-inventory = "&aJackpot Timings":
+		if event-item is light blue stained glass pane named " ":
+			cancel event
+		else if event-item is red dye named "&cBack":
+			cancel event
+			play sound "ui.button.click" to player
+			execute player command "/jackpotadmin"
+		else if event-item is oak sign named "&bEdit interval between jackpots":
+			close player's inventory
+			set metadata value "EditingJackpotTimeInterval" of player to true
+			send "&bEnter your desired time interval between jackpots into chat (Minutes)." to player
+			send "&7Type &c&lcancel &7to exit input mode." to player
+	else if name of event-inventory = "&aJackpot Rewards":
+		cancel event
+		set {_c} to index of clicked slot
+		if {_c} = 40:
+			play sound "ui.button.click" to player
+			close player's inventory
+			
+on chat:
+	if metadata value "EditingJackpotTimeInterval" of player is true:
+		cancel event  
+
+		if message is "cancel":
+			set metadata value "EditingJackpotTimeInterval" of player to false
+			send "&cExited time interval input mode." to player
+			play sound "entity.item.break" to player
+		else:
+			set {_message} to message parsed as number
+			if {_message} is not a number:
+				send "&cPlease enter a valid number!" to player
+			else if {_message} <= 0:
+				send "&cThe interval must be greater than 0 minutes!" to player
+			else:
+				set {JackpotTimeInterval::new} to {_message}
+				send "&aSuccessfully updated Jackpot interval time. &fNew value: &b%{JackpotTimeInterval::new}% minutes" to player
+				set metadata value "EditingJackpotTimeInterval" of player to false
+				open chest inventory with 5 rows named "&aJackpot Timings" to player
+				set slots (integers between 0 and 8) of player's current inventory to light blue stained glass pane named " "
+				set slots (integers between 36 and 44) of player's current inventory to light blue stained glass pane named " "
+				set slots 9, 18, 27, 17, 26, 35 of player's current inventory to light blue stained glass pane named " "
+				set slot 40 of player's current inventory to red dye named "&cBack" with lore "", "&f| &eClick to return to last page"
+				set slot 22 of player's current inventory to oak sign named "&bEdit interval between jackpots" with lore "", "&f| &eClick to edit the time interval between jackpots", "", "&9Current Value: &f%{JackpotTimeInterval::new}% &7(minutes)"
+
+		
+command /forcejackpot:
+	aliases: /startjackpot
+	permission: jackpot.admin
+	trigger:
+		if {Jackpot} is true:
+			send "&cThe jackpot is already running." to player
+		else:
+			StartJackpot()
+		

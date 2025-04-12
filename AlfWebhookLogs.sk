@@ -1,0 +1,142 @@
+
+
+import:
+	java.net.HttpURLConnection
+	java.net.URL
+	java.io.OutputStreamWriter
+
+
+on command:
+	if command sender is a player:
+		set {_player} to player's name
+		set {_command} to "/" + full command
+		set {_webhookURL} to "https://discordapp.com/api/webhooks/1357743668039254047/EQQWLbCqGBqbqxWsGrPLfJHw5d99RbktcAsUhi9ZUv4J821RY8hQFuiZz8Os09A8Fonn"
+		set {_time} to now
+		set {_avatar} to "https://minotar.net/avatar/%{_player}%"
+
+		set {_json} to "{ ""username"": ""Command Logger"", ""avatar_url"": ""%{_avatar}%"", ""embeds"": [{"
+		set {_json} to {_json} + """title"": ""📝 A player executed a command"", ""color"": 16711680,"
+		set {_json} to {_json} + """fields"": ["
+		set {_json} to {_json} + "{ ""name"": ""👤 Player"", ""value"": ""`%{_player}%`"", ""inline"": true },"
+		set {_json} to {_json} + "{ ""name"": ""💬 Command"", ""value"": ""`%{_command}%`"", ""inline"": false },"
+		set {_json} to {_json} + "{ ""name"": ""⏳ Time"", ""value"": ""`%{_time}%`"", ""inline"": false },"
+		set {_json} to {_json} + "{ ""name"": ""🌍 Server"", ""value"": ""Gens"", ""inline"": false }"
+		set {_json} to {_json} + "], ""thumbnail"": { ""url"": ""%{_avatar}%"" } }] }"
+
+		set {_url} to new URL({_webhookURL})
+		set {_connection} to {_url}.openConnection()
+		{_connection}.setRequestMethod("POST")
+		{_connection}.setRequestProperty("Content-Type", "application/json")
+		{_connection}.setDoOutput(true)
+
+		set {_writer} to new OutputStreamWriter({_connection}.getOutputStream())
+		{_writer}.write({_json})
+		{_writer}.flush()
+		{_writer}.close()
+
+		set {_responseCode} to {_connection}.getResponseCode()
+
+		if {_responseCode} = 200:
+			send "&aCommand log successfully sent." to console
+		else if {_responseCode} = 204:
+			send "&aCommand log successfully sent." to console
+		else:
+			send "&cError sending command log! Response code: %{_responseCode}%" to console
+
+			
+
+on gamemode change:
+	set {_player} to player's name
+	set {_gm} to "%player's gamemode%"
+	set {_webhookURL} to "https://discordapp.com/api/webhooks/1357743771898613930/8D1zEDCWDnSIvkWnGJl9Z3MJPfFqZPGQ2BITkptXEA_RX_0rWEEBYhz4NGXcndB0o9yB"
+	set {_time} to now
+	set {_avatar} to "https://minotar.net/avatar/%{_player}%"
+
+	if {_gm} is "survival":
+		set {_color} to 65280 
+	else if {_gm} is "creative":
+		set {_color} to 255 
+	else if {_gm} is "adventure":
+		set {_color} to 16753920 
+	else if {_gm} is "spectator":
+		set {_color} to 5000268 
+	else:
+		set {_color} to 16711680 
+
+	set {_json} to "{ ""username"": ""Gamemode Logger"", ""avatar_url"": ""%{_avatar}%"", ""embeds"": [{ ""title"": ""🎮 Gamemode Change Alert"", ""color"": %{_color}%, ""fields"": ["
+	set {_json} to {_json} + "{ ""name"": ""👤 Player"", ""value"": ""`%{_player}%`"", ""inline"": true },"
+	set {_json} to {_json} + "{ ""name"": ""🎮 New Gamemode"", ""value"": ""`%{_gm}%`"", ""inline"": true },"
+	set {_json} to {_json} + "{ ""name"": ""⏳ Time"", ""value"": ""`%{_time}%`"", ""inline"": false },"
+	set {_json} to {_json} + "{ ""name"": ""🌍 Server"", ""value"": ""Gens"", ""inline"": false }"
+	set {_json} to {_json} + "], ""thumbnail"": { ""url"": ""%{_avatar}%"" } }] }"
+
+
+	set {_url} to new URL({_webhookURL})
+	set {_connection} to {_url}.openConnection()
+	{_connection}.setRequestMethod("POST")
+	{_connection}.setRequestProperty("Content-Type", "application/json")
+	{_connection}.setDoOutput(true)
+		
+	set {_writer} to new OutputStreamWriter({_connection}.getOutputStream())
+	{_writer}.write({_json})
+	{_writer}.flush()
+	{_writer}.close()
+		
+	set {_responseCode} to {_connection}.getResponseCode()
+		
+	if {_responseCode} = 200:
+		send "&aGamemode log successfully sent." to console
+	else if {_responseCode} = 204:
+		send "&aGamemode log successfully sent." to console
+	else:
+		send "&cError sending gamemode log! Response code: %{_responseCode}%" to console
+
+
+		
+		
+on death of player:
+	set {_player} to victim's name
+	set {_cause} to event-damagecause
+	set {_loc} to location of victim
+	set {_world} to world of victim
+	set {_time} to now
+	set {_webhookURL} to "https://discordapp.com/api/webhooks/1357743855918780627/B-i4NyLbEpZw_K7leq_G_4da-aRR40vmnB9qVgbyzcevKDY-VZI4JBOCj2YcH8gduqPt"
+	set {_avatar} to "https://minotar.net/avatar/%{_player}%"
+
+	if attacker is set:
+		set {_killer} to attacker's name
+	else:
+		set {_killer} to "N/A"
+		
+	set {_formattedLoc} to "x: `%round(x-coord of {_loc})%`, y: `%round(y-coord of {_loc})%`, z: `%round(z-coord of {_loc})%` in `%{_world}%`"
+
+	set {_json} to "{ ""username"": ""Death Logger"", ""avatar_url"": ""%{_avatar}%"", ""embeds"": [{ ""title"": ""⚠ Player Death Alert!"", ""color"": 16711680, ""fields"": ["
+	set {_json} to {_json} + "{ ""name"": ""👤 Player"", ""value"": ""`%{_player}%`"", ""inline"": true },"
+	set {_json} to {_json} + "{ ""name"": ""⚔ Cause"", ""value"": ""`%{_cause}%`"", ""inline"": true },"
+	set {_json} to {_json} + "{ ""name"": ""💀 Killed by"", ""value"": ""`%{_killer}%`"", ""inline"": true },"
+	set {_json} to {_json} + "{ ""name"": ""📍 Location"", ""value"": ""%{_formattedLoc}%"", ""inline"": false },"  
+	set {_json} to {_json} + "{ ""name"": ""⏳ Time"", ""value"": ""`%{_time}%`"", ""inline"": false }"  
+	set {_json} to {_json} + "{ ""name"": ""🌍 Server"", ""value"": ""Gens"", ""inline"": false }"
+	set {_json} to {_json} + "], ""thumbnail"": { ""url"": ""%{_avatar}%"" } }] }"
+
+
+	set {_url} to new URL({_webhookURL})
+	set {_connection} to {_url}.openConnection()
+	{_connection}.setRequestMethod("POST")
+	{_connection}.setRequestProperty("Content-Type", "application/json")
+	{_connection}.setDoOutput(true)
+		
+	set {_writer} to new OutputStreamWriter({_connection}.getOutputStream())
+	{_writer}.write({_json})
+	{_writer}.flush()
+	{_writer}.close()
+			
+	set {_responseCode} to {_connection}.getResponseCode()
+			
+
+	if {_responseCode} = 200:
+		send "&aDeath log successfully sent." to console
+	else if {_responseCode} = 204:
+		send "&aDeath log successfully sent." to console
+	else:
+		send "&cError sending death log! Response code: %{_responseCode}%" to console

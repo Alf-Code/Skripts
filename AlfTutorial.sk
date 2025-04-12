@@ -1,0 +1,213 @@
+# Skript made exclusively for NoobBoxZ
+
+options:
+	OnlySafeTutorial: false # Set to true if you only want players to be able to enter the tutorial in a certain region (e.g. spawn)
+	TutorialRegion: null # Only applies if "OnlySafeTutorial" = true
+
+
+command /tutorial:
+	aliases: /guide, /start
+	prefix: tutorial
+	trigger:
+		if {donetutorial::%player's uuid%} is true:
+			if {@OnlySafeTutorial} is true:
+				if region at player = "{@TutorialRegion}":
+					BeginTutorial(player)
+				else:
+					send "&cYou cannot view the tutorial here."
+			else:
+				BeginTutorial(player)
+		else:
+			send "&cYou have already completed the tutorial." to player
+			
+
+command /admintutorial [<text>] [<integer>]:
+	aliases: /at, /tutorialadmin
+	prefix: tutorial
+	permission: skript.tutorial.admin
+	permission message: &cSorry, you cannot perform this command.
+	trigger:
+		if arg-1 is "setwarp":
+			if arg-2 is set:
+				set {TutorialWarp::%arg-2%} to player's location
+				send "&aSuccessfully set tutorial warp &e%arg-2% &ato &b%player's location%&a." to player
+				if {TutorialTitle::%arg-2%} isn't set:
+					set {TutorialTitle::%arg-2%} to ""
+				if {TutorialSubtitle::%arg-2%} isn't set:
+					set {TutorialSubtitle::%arg-2%} to ""
+		else if arg-1 is "warp":
+			if arg-2 is set: 
+				if {TutorialWarp::%arg-2%} is set:
+					teleport player to {TutorialWarp::%arg-2%}
+					send "&aSuccessfully teleported to tutorial warp &e%arg-2%&a." to player
+				else:
+					send "&cThe tutorial warp &e%arg-2% &chas not yet been set." to player
+			else:
+				send "&cUsage: /admintutorial warp <number>" to player
+		else if arg-1 is "setrewards":
+			open chest inventory with 1 rows named "&aTutorial Rewards" to player
+			loop 9 times:
+				set slot (loop-value - 1) of player's current inventory to {TutorialReward::%loop-value%}
+		else if arg-1 is "setfinishpoint":
+			set {TutorialFinishPoint} to player's location
+			send "&aTutorial finish point set to &b%{TutorialFinishPoint}%&a." to player
+		else if arg-1 is "info":
+			if arg-2 is set:
+				if {TutorialWarp::%arg-2%} is set:
+					set metadata value "Tutorial Number" of player to arg-2
+					open chest inventory with 3 rows named "&aTutorial Info &f| &e%arg-2%" to player
+					set slot (integers between 0 and 8) of player's current inventory to black stained glass pane named " "
+					set slot (integers between 18 and 26) of player's current inventory to black stained glass pane named " "
+					set slot 13 of player's current inventory to paper named "&aTutorial Warp Info &f| &e%arg-2%" with lore "&bID: &e%arg-2%", "&bLocation: &e%{TutorialWarp::%arg-2%}%", "", "&bTitle: &e%{TutorialTitle::%arg-2%}%" and "&bSubtitle: &e%{TutorialSubtitle::%arg-2%}%"
+					set slot 12 of player's current inventory to oak sign named "&dTitle" with lore "" and "&aClick to set title"
+					set slot 14 of player's current inventory to dark oak sign named "&dSubtitle" with lore "" and "&aClick to set subtitle"
+					set slot 22 of player's current inventory to ender pearl named "&5Teleport to warp &e%arg-2%" with lore "" and "&aClick to teleport"
+				else:
+					send "&cTutorial warp &e%arg-2% &chas not yet been set." to player
+			else:
+				send "&cUsage: /admintutorial info <number>" to player 
+		else if arg-1 is "listwarps":
+			open chest inventory with 3 rows named "&aTutorial Warp List" to player
+			loop 27 times:
+				if {TutorialWarp::%loop-value%} is set:
+					set slot (loop-value - 1) of player's current inventory to green wool named "&aWarp &e%loop-value%" with lore "&fSet: &atrue", "" and "&aClick to view warp info"
+				else:
+					set slot (loop-value - 1) of player's current inventory to red wool named "&aWarp &e%loop-value%" with lore "&fSet: &cfalse"
+		else if arg-1 is "deletewarp":
+			if arg-2 is set:
+				if {TutorialWarp::%arg-2%} is set:
+					clear {TutorialWarp::%arg-2%}
+					clear {TutorialTitle::%arg-2%}
+					clear {TutorialSubtitle::%arg-2%}
+					send "&aSuccessfully deleted warp &e%arg-2%&a." to player
+				else: 
+					send "&cWarp &e%arg-2% is not set." to player
+			else:
+				send "&cUsage: /admintutorial deletewarp <number>" to player
+		else if arg-1 is "help":
+			send "&f============ &6Tutorial Help &f============" to player
+			send "&3/admintutorial setwarp <integer> &f(Sets the location for a tutorial warp)" to player
+			send "&3/admintutorial warp <integer> &f(Teleport to a tutorial warp)" to player
+			send "&3/admintutorial setfinishpoint &f(Sets the location for the tutorial finish point)" to player
+			send "&3/admintutorial setrewards &f(Sets the rewards given to the player after completing the tutorial)" to player
+			send "&3/admintutorial info <integer> &f(View a tutorial warp's info and edit the title and subtitle sent)" to player
+			send "&3/admintutorial listwarps &f(View all warps)" to player
+			send "&f============ &6Admin Tutorial &f============" to player
+		else if arg-1 isn't set:
+			execute player command "/admintutorial help"
+		else:
+			execute player command "/admintutorial help"
+				
+function BeginTutorial(p: player):
+	set metadata value "InTutorial" of {_p} to true
+	set {_p}'s gamemode to spectator
+	set fly speed of {_p} to 0.05
+	loop 10 times:
+		if {TutorialWarp::%loop-value%} is set:
+			teleport {_p} to {TutorialWarp::%loop-value%}
+			play sound "entity.enderman.teleport" to {_p}
+			send title "%{TutorialTitle::%loop-value%}%" with subtitle "%{TutorialSubtitle::%loop-value%}%" to {_p} for 5 seconds with fadein 1 second and fade out 1 second
+			wait 2 seconds
+			play sound "block.note_block.bass" with pitch 1.2 to {_p}
+			wait 1 second 
+			play sound "block.note_block.bass" with pitch 1.2 to {_p}
+			wait 1 second 
+			play sound "block.note_block.bass" with pitch 1.2 to {_p}
+			wait 1 second
+	teleport {_p} to {TutorialFinishPoint}
+	set {_p}'s gamemode to survival
+	loop {TutorialReward::*}:
+		give {_p} loop-value
+	play sound "entity.player.levelup" to {_p}
+	broadcast "&6&lTutorial &f| &a%{_p}% &fhas completed the tutorial and received some rewards. &e(/tutorial)"
+	set {donetutorial::%{_p}'s uuid%} to true
+	set fly speed of {_p} to 0.1
+	set metadata value "InTutorial" of {_p} to false
+	
+on inventory click:
+	if name of event-inventory contains "&aTutorial Info &f|":
+		cancel event
+		set {_c} to index of clicked slot
+		if {_c} = 12:
+			play sound "ui.button.click" to player
+			close player's inventory
+			send "&aEnter the desired title for warp %metadata value "Tutorial Number" of player% into chat." to player
+			send "&7Type &c&lcancel &7to cancel." to player
+			set {SettingTitle::%player's uuid%} to true
+		else if {_c} = 14:
+			play sound "ui.button.click" to player
+			close player's inventory
+			send "&aEnter the desired subtitle for warp %metadata value "Tutorial Number" of player% into chat." to player
+			send "&7Type &c&lcancel &7to cancel." to player
+			set {SettingSubtitle::%player's uuid%} to true
+		else if {_c} = 22:
+			close player's inventory
+			set {_warpnumber} to metadata value "Tutorial Number" of player
+			make player execute command "/admintutorial warp %{_warpnumber}%"
+			play sound "entity.enderman.teleport" to player
+	else if name of event-inventory = "&aTutorial Warp List":
+		cancel event
+		set {_c} to index of clicked slot
+		add 1 to {_c}
+		if event-item is green wool:
+			execute player command "/admintutorial info %{_c}%"
+			play sound "ui.button.click" to player
+				
+on inventory close:
+	if name of event-inventory is "&aTutorial Rewards":
+		loop 9 times:
+			set {TutorialReward::%loop-value%} to slot (loop-value - 1) of player's current inventory
+		send "&aTutorial Rewards successfully saved." to player
+		loop {TutorialReward::*}:
+			send "&a- &f%loop-value%" to player
+		
+
+			
+on chat:
+	if {SettingTitle::%player's uuid%} is true:
+		cancel event
+		replace all "&" in message with "§"
+		if message is "cancel":
+			set {SettingTitle::%player's uuid%} to false
+			send "&cTitle input mode exited." to player
+		else:
+			set {TutorialTitle::%metadata value "Tutorial Number" of player%} to message
+			send "&aTutorial Title &e%metadata value "Tutorial Number" of player% &aset to %message%" to player
+			set {SettingTitle::%player's uuid%} to false
+			clear metadata value "Tutorial Number" of player
+	else if {SettingSubtitle::%player's uuid%} is true:
+		cancel event
+		replace all "&" in message with "§"
+		if message is "cancel":
+			set {SettingSubtitle::%player's uuid%} to false
+			send "&cSubtitle input mode exited." to player
+		else:
+			set {TutorialSubtitle::%metadata value "Tutorial Number" of player%} to message
+			send "&aTutorial Subtitle &e%metadata value "Tutorial Number" of player% &aset to %message%" to player
+			set {SettingSubtitle::%player's uuid%} to false
+			clear metadata value "Tutorial Number" of player
+			
+			
+on tab complete of "/admintutorial":
+	if event-player has permission "skript.tutorial.admin":
+		set tab completions for position 1 to "warp", "setwarp", "deletewarp", "setfinishpoint", "info", "listwarps" and "setrewards"
+		set tab completions for position 2 to 1, 2, 3, 4, 5, 6, 7, 8, 9
+
+on tab complete of "/at":
+	if event-player has permission "skript.tutorial.admin":
+		set tab completions for position 1 to "warp", "setwarp", "deletewarp", "setfinishpoint", "info", "listwarps" and "setrewards"
+		set tab completions for position 2 to 1, 2, 3, 4, 5, 6, 7, 8, 9
+		
+on tab complete of "/tutorialadmin":
+	if event-player has permission "skript.tutorial.admin":
+		set tab completions for position 1 to "warp", "setwarp", "deletewarp", "setfinishpoint", "info", "listwarps" and "setrewards"
+		set tab completions for position 2 to 1, 2, 3, 4, 5, 6, 7, 8, 9
+		
+on command:
+	if metadata value "InTutorial" of player is true:
+		cancel event
+		send "&cCommands are disabled in the tutorial."
+
+on player switch spectating of entity:
+	if metadata value "InTutorial" of player is true:
+		cancel event

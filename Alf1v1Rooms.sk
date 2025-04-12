@@ -1,0 +1,433 @@
+
+
+
+
+command /1v1Admin [<text>] [<integer>]:
+	aliases: /roomadmin, /1v1setup
+	permission: 1v1Rooms.admin
+	permission message: &cSorry, but you do not have the required permission to perform this command.
+	trigger:
+		if arg-1 is set:
+			if arg-1 = "setroom":
+				if arg-2 is set:
+					if {1v1room::%arg-2%} is not set:
+						set metadata value "Creating1v1Room" of player to arg-2
+						send "&e&l 1v1 Rooms &f| &aSuccessfully entered 1v1 room creation mode." to player
+						send "&e&l 1v1 Rooms &f| &eLeft-click on a block to set first point." to player
+						send "&e&l 1v1 Rooms &f| &eRight-click on a block to set second point." to player
+					else:
+						send "&cThis room is already set. If you wish to change it you must delete it first." to player
+				else:
+					send "&cUsage: /1v1admin setroom <room number>" to player
+			else if arg-1 is "setentrance":
+				if arg-2 is set:
+					if {1v1room::%arg-2%} is set:
+						set metadata value "Creating1v1RoomEntrance" of player to arg-2
+						send "&e&l 1v1 Rooms &f| &aSuccessfully entered 1v1 room door creation mode." to player
+						send "&e&l 1v1 Rooms &f| &eLeft-click on a block to set first point of the entrance." to player
+						send "&e&l 1v1 Rooms &f| &eRight-click on a block to set second point of the entrance." to player
+						execute player command "/rg delete 1v1Entrance%arg-2%"
+					else:
+						send "&cThis room is not set. Please set up the room before the door." to player
+				else:
+					send "&cUsage: /1v1admin setentrance <room number>" to player
+			else if arg-1 = "settppoints":
+				if arg-2 is set:
+					if {1v1room::%arg-2%} is set:
+						set metadata value "Creating1v1RoomTPPoints" of player to arg-2
+						send "&e&l 1v1 Rooms &f| &aSuccessfully entered 1v1 TP Points creation mode." to player
+						send "&e&l 1v1 Rooms &f| &ePlease go to the location where players should be teleported to when they enter the room's door and type &f&l1 &ein chat." to player
+						send "&e&l 1v1 Rooms &f| &ePlease go to the location where players should be teleported to if three players are in the room simultaneously and type &f&l2 &ein chat." to player
+						send "&e&l 1v1 Rooms &f| &7Type &c&lcancel &7if you wish to exit 1v1 room TP point creation mode." to player
+					else:
+						send "&cYou must first set up the 1v1 room before the TP points." to player
+				else:
+					send "&cUsage: /1v1admin settppoints <room number>" to player
+			else if arg-1 = "listrooms":
+				open chest inventory with 5 rows named "&a1v1 Room List" to player
+				set slots (integers between 0 and 8) of player's current inventory to light blue stained glass pane named " "
+				set slots (integers between 36 and 44) of player's current inventory to light blue stained glass pane named " "
+				set slots 9, 18, 27, 17, 26, 35 of player's current inventory to light blue stained glass pane named " "
+				loop (integers between 10 and 16):
+					set {_num} to (loop-value - 9)
+					set {_slot} to loop-value
+					if {1v1room::%{_num}%} is set:
+						if slot {_slot} of player's current inventory is empty:
+							set slot {_slot} of player's current inventory to green wool named "&aRoom &e%{_num}%" with lore "&fSet: &atrue", "" and "&aClick to view room info"
+					else:
+						if slot {_slot} of player's current inventory is empty:
+							set slot {_slot} of player's current inventory to red wool named "&aRoom &e%{_num}%" with lore "&fSet: &cfalse"
+				loop (integers between 19 and 25):
+					set {_num} to (loop-value - 11)
+					set {_slot} to loop-value
+					if {1v1room::%{_num}%} is set:
+						if slot {_slot} of player's current inventory is empty:
+							set slot {_slot} of player's current inventory to green wool named "&aRoom &e%{_num}%" with lore "&fSet: &atrue", "" and "&aClick to view room info"
+					else:
+						if slot {_slot} of player's current inventory is empty:
+							set slot {_slot} of player's current inventory to red wool named "&aRoom &e%{_num}%" with lore "&fSet: &cfalse"
+				loop (integers between 28 and 34):
+					set {_num} to (loop-value - 13)
+					set {_slot} to loop-value
+					if {1v1room::%{_num}%} is set:
+						if slot {_slot} of player's current inventory is empty:
+							set slot {_slot} of player's current inventory to green wool named "&aRoom &e%{_num}%" with lore "&fSet: &atrue", "" and "&aClick to view room info"
+					else:
+						if slot {_slot} of player's current inventory is empty:
+							set slot {_slot} of player's current inventory to red wool named "&aRoom &e%{_num}%" with lore "&fSet: &cfalse"
+			else if arg-1 = "info":
+				if arg-2 is set:
+					if {1v1room::%arg-2%} is set:
+						set metadata value "Room Number" of player to arg-2
+						open chest inventory with 3 rows named "&a1v1 Room Info &f| &e%arg-2%" to player
+						set slot (integers between 0 and 8) of player's current inventory to black stained glass pane named " "
+						set slot (integers between 18 and 26) of player's current inventory to black stained glass pane named " "
+						set slot 13 of player's current inventory to paper named "&a1v1 Room Info &f| &e%arg-2%" with lore "&bID: &e%arg-2%", "&bCenter: &e%{1v1room::center::%arg-2%}%", "&bPosition 1: &e%{1v1room::%arg-2%::pos1}%", "&bPosition 2: &e%{1v1room::%arg-2%::pos2}%" 
+						set slot 11 of player's current inventory to ender pearl named "&5Teleport to room &e%arg-2%" with lore "" and "&aClick to teleport"
+						set slot 15 of player's current inventory to barrier named "&cDelete Room &e%arg-2%" with lore "", and "&cClick to delete this room"
+					else:
+						send "&c1v1 Room &e%arg-2% &chas not yet been set." to player
+				else:
+					send "&cUsage: /1v1admin info <room number>" to player 
+			else if arg-1 = "deleteroom":
+				if arg-2 is set:
+					if {1v1room::%arg-2%} is set:
+						clear {1v1room::%arg-2%}
+						clear {1v1room::%arg-2%::*}
+						clear {1v1roomdoor::%arg-2%::*}
+						clear {1v1room::center::%arg-2%}
+						clear {1v1RoomTP::%arg-2%}
+						clear {1v1RoomTPExitTP::%arg-2%}
+						clear {InRoom%arg-2%}
+						execute player command "/rg delete 1v1Room%arg-2%"
+						send "&aSuccessfully deleted 1v1 room &e%arg-2%&a." to player
+					else:
+						send "&cRoom &e%arg-2% &cis not set." to player
+				else:
+					send "&cUsage: /1v1admin deleteroom <room number>" to player
+on leftclick:
+	event-block is set
+	if metadata value "Creating1v1Room" of player is set:
+		set {1v1room::%metadata value "Creating1v1Room" of player%::pos1} to event-block
+		set {_num} to metadata value "Creating1v1Room" of player
+		send "&e&l 1v1 Rooms &f| &aSuccessfully set first position to &b%{1v1room::%{_num}%::pos1}%" to player
+		play sound "block.note_block.chime" to player
+		if metadata value "DonePos2" of player is true:
+			Create1v1Room(player)
+			set metadata value "DonePos2" of player to false
+		else:
+			set metadata value "DonePos1" of player to true
+		
+		
+	else if metadata value "Creating1v1RoomEntrance" of player is set:
+		set {1v1roomdoor::%metadata value "Creating1v1RoomEntrance" of player%::pos1} to event-block 
+		set {_num} to metadata value "Creating1v1RoomEntrance" of player
+		send "&e&l 1v1 Rooms &f| &aSuccessfully set first entrance position to &b%{1v1roomdoor::%{_num}%::pos1}%" to player
+		play sound "block.note_block.chime" to player
+		if metadata value "DoneDoor2" of player is true:
+			Create1v1RoomDoor(player)
+			set metadata value "DoneDoor2" of player to false
+		else:
+			set metadata value "DoneDoor1" of player to true
+
+on rightclick:
+	event-block is set
+	if metadata value "Creating1v1Room" of player is set:
+		set {_num} to metadata value "Creating1v1Room" of player
+		set {1v1room::%{_num}%::pos2} to event-block
+		send "&e&l 1v1 Rooms &f| &aSuccessfully set second position to &b%{1v1room::%{_num}%::pos2}%" to player
+		play sound "block.note_block.chime" to player
+		if metadata value "DonePos1" of player is true:
+			Create1v1Room(player)
+			set metadata value "DonePos1" of player to false
+		else:
+			set metadata value "DonePos2" of player to true
+		
+		
+	else if metadata value "Creating1v1RoomEntrance" of player is set:
+		set {_num} to metadata value "Creating1v1RoomEntrance" of player
+		set {1v1roomdoor::%{_num}%::pos2} to event-block 
+		send "&e&l 1v1 Rooms &f| &aSuccessfully set second entrance position to &b%{1v1roomdoor::%{_num}%::pos2}%" to player
+		play sound "block.note_block.chime" to player
+		if metadata value "DoneDoor1" of player is true:
+			Create1v1RoomDoor(player)
+			set metadata value "DoneDoor1" of player to false
+		else:
+			set metadata value "DoneDoor2" of player to true
+
+on break:
+	if metadata value "Creating1v1Room" of player is set:
+		cancel event
+	else if metadata value "Creating1v1RoomEntrance" of player is set:
+		cancel event
+
+on place:
+	if metadata value "Creating1v1Room" of player is set:
+		cancel event
+	else if metadata value "Creating1v1RoomEntrance" of player is set:
+		cancel event
+on chat: 
+	if metadata value "Creating1v1RoomTPPoints" of player is set:
+		set {_msg} to message
+		set {_p} to player
+		if {_msg} = "1":
+			cancel event
+			set {1v1RoomTP::%metadata value "Creating1v1RoomTPPoints" of {_p}%} to {_p}'s location
+			set {_roomnum} to metadata value "Creating1v1RoomTPPoints" of {_p}
+			send "&e&l 1v1 Rooms &f| &aSuccessfully set Room TP Enter Point to &b%{1v1RoomTP::%{_roomnum}%}%" to {_p}
+			if metadata value "DoneTPPoint2" of {_p} is true:
+				clear metadata value "Creating1v1RoomTPPoints" of {_p}
+				set metadata value "DoneTPPoint2" of {_p} to false
+			else:
+				set metadata value "DoneTPPoint1" of {_p} to true
+		else if {_msg} = "2":
+			cancel event
+			set {1v1RoomTPExitTP::%metadata value "Creating1v1RoomTPPoints" of {_p}%} to {_p}'s location
+			set {_roomnum} to metadata value "Creating1v1RoomTPPoints" of {_p}
+			send "&e&l 1v1 Rooms &f| &aSuccessfully set Room TP Exit Point to &b%{1v1RoomTPExitTP::%{_roomnum}%}%" to {_p}
+			if metadata value "DoneTPPoint1" of {_p} is true:
+				clear metadata value "Creating1v1RoomTPPoints" of {_p}
+				set metadata value "DoneTPPoint1" of {_p} to false
+			else:
+				set metadata value "DoneTPPoint2" of {_p} to true
+		else if {_msg} = "cancel":
+			cancel event
+			clear metadata value "Creating1v1RoomTPPoints" of {_p}
+			send "&aSuccessfully left 1v1 room TP Point creation mode." to {_p}
+		else:
+			send "&cYou are in 1v1 Room TP Point creation mode. Please either type '&f1' or '&f2' to create TP points or type '&fcancel' to exit." to {_p}
+
+on region exit:
+	if "%event-region%" contains "1v1Room":
+		if metadata value "InRoom" of player is set:
+			set {_num} to metadata value "InRoom" of player
+			clear metadata value "InRoom" of player
+			subtract 1 from {InRoom%{_num}%}
+			loop all blocks in region "1v1entrance%{_num}%":
+				if loop-block is black stained glass:
+					set loop-block to air
+				else if loop-block is cobweb:
+					set loop-block to air
+				else if loop-block is water:
+					set loop-block to air
+
+on quit:
+	if metadata value "InRoom" of player is set:
+		kill player
+		Handle1v1RoomDeath(player)
+
+on region enter:
+	if "%event-region%" contains "1v1entrance":
+		
+		set {_region} to "%event-region%"
+		replace all "1v1entrace" with "" in {_region}
+		replace all " in world world" with "" in {_region}
+		replace all " " with "" in {_region}
+		Manage1v1Door(player, {_region})
+	else if "%event-region%" contains "1v1room":
+		set {_region} to "%event-region%"
+		replace all "1v1room" with "" in {_region}
+		replace all " in world world" with "" in {_region}
+		replace all " " with "" in {_region}
+		Manage1v1Room(player, {_region})
+
+on death of a player:
+	if metadata value "InRoom" of victim is set:
+		Handle1v1RoomDeath(victim)
+
+function Create1v1Room(p: player):
+	set gamemode of {_p} to spectator
+	set fly speed of {_p} to 0
+	send title "&aPlease hold on..." to {_p}
+	set {_currentloc} to {_p}'s location
+	wait 1 second
+	teleport {_p} to {1v1room::%metadata value "Creating1v1Room" of {_p}%::pos1}
+	play sound "entity.enderman.teleport" to {_p}
+	make {_p} execute command "//pos1"
+	wait 1 seconds
+	teleport {_p} to {1v1room::%metadata value "Creating1v1Room" of {_p}%::pos2}
+	play sound "entity.enderman.teleport" to {_p}
+	make {_p} execute command "//pos2"
+	wait 1 seconds
+	teleport {_p} to {_currentloc}
+	play sound "entity.enderman.teleport" to {_p}
+	set {_roomnum} to metadata value "Creating1v1Room" of {_p}
+	make {_p} execute command "/rg create 1v1Room%{_roomnum}%"
+	play sound "block.note_block.bell" to {_p}
+	send "&e&l 1v1 Rooms &f| &aSuccessfully created room &f%{_roomnum}%&a!" to {_p}
+	set {1v1room::%{_roomnum}%} to true
+	set {_pos1} to {1v1room::%metadata value "Creating1v1Room" of {_p}%::pos1}
+	set {_pos2} to {1v1room::%metadata value "Creating1v1Room" of {_p}%::pos2} 
+	set {_centerX} to ((x-coord of {_pos1}) + (x-coord of {_pos2})) / 2
+	set {_centerY} to ((y-coord of {_pos1}) + (y-coord of {_pos2})) / 2
+	set {_centerZ} to ((z-coord of {_pos1}) + (z-coord of {_pos2})) / 2
+	set {_center} to location({_centerX}, {_centerY}, {_centerZ})
+	set {1v1room::center::%{_roomnum}%} to {_center}
+	clear metadata value "Creating1v1Room" of {_p}
+	set gamemode of {_p} to creative
+	set fly speed of {_p} to 0.1
+
+function Create1v1RoomDoor(p: player):
+	set gamemode of {_p} to spectator
+	set fly speed of {_p} to 0
+	send title "&aPlease hold on..." to {_p}
+	set {_currentloc} to {_p}'s location
+	wait 1 second
+	teleport {_p} to {1v1roomdoor::%metadata value "Creating1v1RoomEntrance" of {_p}%::pos1}
+	play sound "entity.enderman.teleport" to {_p}
+	make {_p} execute command "//pos1"
+	wait 1 seconds
+	teleport {_p} to {1v1roomdoor::%metadata value "Creating1v1RoomEntrance" of {_p}%::pos2}
+	play sound "entity.enderman.teleport" to {_p}
+	make {_p} execute command "//pos2"
+	wait 1 seconds
+	teleport {_p} to {_currentloc}
+	play sound "entity.enderman.teleport" to {_p}
+	set {_roomnum} to metadata value "Creating1v1RoomEntrance" of {_p}
+	make {_p} execute command "/rg create 1v1Entrance%{_roomnum}%"
+	play sound "block.note_block.bell" to {_p}
+	send "&e&l 1v1 Rooms &f| &aSuccessfully created entrance for room &f%{_roomnum}%&a!"  to {_p}
+	set {1v1roomdoor::%{_roomnum}%} to true
+	clear metadata value "Creating1v1RoomEntrance" of {_p}
+	set gamemode of {_p} to creative
+	set fly speed of {_p} to 0.1
+	
+# function Create1v1RoomTPPoints(p: player, msg: string):
+	
+	
+	
+	
+
+function Manage1v1Door(p: player, room: text):
+	if {InRoom%{_room}%} = 1:
+		if metadata value "InRoom" of {_p} isn't set:
+			set metadata value "InRoom" of {_p} to {_room}
+	else if {InRoom%{_room}%} >= 2:
+		teleport {_p} to {1v1RoomTPExitTP::%{_room}%}
+		if metadata value "InRoom" of {_p} is set:
+			clear metadata value "InRoom" of {_p}
+	else if {InRoom%{_room}%} = 0:
+		if metadata value "InRoom" of {_p} isn't set:
+			set metadata value "InRoom" of {_p} to {_room}
+	
+function Manage1v1Room(p: player, room: text):
+	if {InRoom%{_room}%} >= 2:
+		teleport {_p} to {1v1RoomTPExitTP::%{_room}%}
+		if metadata value "InRoom" of {_p} is set:
+			clear metadata value "InRoom" of {_p}
+	else if {InRoom%{_room}%} = 1:
+		add 1 to {InRoom%{_room}%}
+		teleport {_p} to {1v1RoomTP::%{_room}%}
+		if metadata value "InRoom" of {_p} isn't set:
+			set metadata value "InRoom" of {_p} to {_room}
+		loop all blocks in region "1v1entrance%{_room}%":
+			if loop-block is air:
+				set loop-block to black stained glass
+			else if loop-block is cobweb:
+				set loop-block to black stained glass
+			else if loop-block is water:
+				set loop-block to black stained glass
+		
+	else:
+		add 1 to {InRoom%{_room}%}
+		if metadata value "InRoom" of {_p} isn't set:
+			set metadata value "InRoom" of {_p} to {_room}
+					
+					
+function Handle1v1RoomDeath(p: player):
+	set {_roomnum} to metadata value "InRoom" of {_p}
+	subtract 1 from {InRoom%{_roomnum}%}
+	wait 2 ticks
+	clear metadata value "InRoom" of {_p}
+	send subtitle "&aRoom opening in 5 seconds..." to all players where [region at input = "1v1room%{_roomnum}%"]
+	wait 5 seconds
+	loop all blocks in region "1v1entrance%{_roomnum}%":
+		if loop-block is black stained glass:
+			set loop-block to air
+		else if loop-block is cobweb:
+			set loop-block to air
+		else if loop-block is water:
+			set loop-block to air
+
+
+on tab complete of "/1v1Admin":
+	if event-player has permission "1v1Rooms.admin":
+		set tab completions for position 1 to "setroom", "setentrance", "settppoints", "listrooms", "info", "deleteroom"
+		set tab completions for position 2 to 1, 2, 3, 4, 5, 6, 7, 8, 9
+		
+on tab complete of "/roomadmin":
+	if event-player has permission "1v1Rooms.admin":
+		set tab completions for position 1 to "setroom", "setentrance", "settppoints", "listrooms", "info", "deleteroom"
+		set tab completions for position 2 to 1, 2, 3, 4, 5, 6, 7, 8, 9
+		
+on tab complete of "/1v1setup":
+	if event-player has permission "1v1Rooms.admin":
+		set tab completions for position 1 to "setroom", "setentrance", "settppoints", "listrooms", "info", "deleteroom"
+		set tab completions for position 2 to 1, 2, 3, 4, 5, 6, 7, 8, 9
+		
+
+
+on inventory click:
+	if name of event-inventory = "&a1v1 Room List":
+		cancel event
+		set {_c} to index of clicked slot
+		if event-item is green wool:
+			set {_num} to name of slot {_c} of open inventory
+			replace all "&aRoom &e" with "" in {_num}
+			execute player command "/1v1admin info %{_num}%"
+			play sound "ui.button.click" to player
+		else if event-item is red wool:
+			play sound "entity.villager.no" to player	
+	else if name of event-inventory contains "&a1v1 Room Info &f| &e":
+		cancel event
+		set {_c} to index of clicked slot
+		if {_c} = 11:
+			close player's inventory
+			set {_roomnumber} to metadata value "Room Number" of player
+			teleport player to {1v1room::center::%{_roomnumber}%}
+			play sound "entity.enderman.teleport" to player
+		if {_c} = 15:
+			play sound "ui.button.click" to player
+			close player's inventory
+			set {_roomnumber} to metadata value "Room Number" of player
+			execute player command "/1v1admin deleteroom %{_roomnumber}%" 
+				
+				
+command /debug1v1room <integer>:
+	permission: 1v1Rooms.admin
+	trigger:
+		if {1v1room::%arg-1%} is set:
+			send "&fDebugging Room &e%arg-1% &fnow...."
+			loop all players:
+				if metadata value "InRoom" of loop-player is set:
+					set {_roomnum} to metadata value "InRoom" of loop-player
+					teleport loop-player to {1v1RoomTPExitTP::%{_roomnum}%}
+					wait 2 ticks
+					clear metadata value "InRoom" of loop-player
+			loop all blocks in region "1v1entrance%arg-1%":
+				if loop-block is black stained glass:
+					set loop-block to air
+				else if loop-block is cobweb:
+					set loop-block to air
+				else if loop-block is water:
+					set loop-block to air
+			set {InRoom%arg-1%} to 0
+			send "&aDebugging finished!" to player
+		else:
+			send "&cThis room does not exist." to player
+		
+		
+placeholderapi placeholder with the prefix "1v1room":
+	if the identifier is "room1":
+		set the result to "%{InRoom1}%"
+		
+		
+command /checkplayers:
+	trigger:
+		if {InRoom1} is not set:
+			set {InRoom1} to 0
+		if {InRoom2} is not set:
+			set {InRoom2} to 0
+		send "%{InRoom1}%" to player
+		send "%{InRoom2}%" to player
+		

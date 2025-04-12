@@ -1,0 +1,379 @@
+placeholderapi placeholder with the prefix "team":
+	if the identifier is "name":
+		if {teams::teamofplayer::%player%} is set:
+			if {teams::teamofplayer::%player%::color} is not set:
+				set the result to "&7[<##Ffc0cb>%{teams::teamofplayer::%player%}%&7]"
+			else if {teams::teamofplayer::%player%::color} is "cyan":
+				set the result to "&7[&b%{teams::teamofplayer::%player%}%&7]"
+			else if {teams::teamofplayer::%player%::color} is "green":
+				set the result to "&7[&a%{teams::teamofplayer::%player%}%&7]"
+			else if {teams::teamofplayer::%player%::color} is "darkred":
+				set the result to "&7[&4%{teams::teamofplayer::%player%}%&7]"
+			else if {teams::teamofplayer::%player%::color} is "lightred":
+				set the result to "&7[&c%{teams::teamofplayer::%player%}%&7]"
+			else if {teams::teamofplayer::%player%::color} is "pink":
+				set the result to "&7[&d%{teams::teamofplayer::%player%}%&7]"
+			else if {teams::teamofplayer::%player%::color} is "purple":
+				set the result to "&7[&5%{teams::teamofplayer::%player%}%&7]"
+			else if {teams::teamofplayer::%player%::color} is "gray":
+				set the result to "&7[&7%{teams::teamofplayer::%player%}%&7]"
+			else if {teams::teamofplayer::%player%::color} is "yellow":
+				set the result to "&7[&e%{teams::teamofplayer::%player%}%&7]"
+			else if {teams::teamofplayer::%player%::color} is "black":
+				set the result to "&7[&0%{teams::teamofplayer::%player%}%&7]"
+			else if {teams::teamofplayer::%player%::color} is "white":
+				set the result to "&7[&f%{teams::teamofplayer::%player%}%&7]"
+			else if {teams::teamofplayer::%player%::color} is "blue":
+				set the result to "&7[&9%{teams::teamofplayer::%player%}%&7]"
+		else:
+			set the result to ""
+
+
+options:
+	prefix: "<##Ffc0cb>&lTEAMS &8➠&7"
+
+command /team [<text>] [<text>]:
+	trigger:
+		if arg-1 is set:
+			if arg-1 is "create":
+				teamCreate(player, arg-2)
+			if arg-1 is "color":
+				teamColor(player, arg-2)
+			if arg-1 is "leave":
+				teamLeave(player)
+			if arg-1 is "disband":
+				teamDisband(player)
+			if arg-1 is "invite":
+				teamInvite(player, arg-2)
+			if arg-1 is "accept" or "join":
+				teamAccept(player, arg-2)
+			if arg-1 is "info":
+				if arg-2 isn't set:
+					personalteamInfo(player, arg-2)
+				else:
+					specificteamInfo(player, arg-2)
+			if arg-1 is "ff":
+				teamFF(player)
+			if arg-1 is "kick":
+				if arg-2 is set:
+					teamKick(player, arg-2)
+				else:
+					send "%{@prefix}% &cPlease specify the player you want to kick!" to player		
+			if arg-1 is "chat":
+				teamChat(player)
+			if arg-1 is "help":
+				teamHelp(player)
+			if arg-1 is "top":
+				teamTop(player)
+			if arg-1 is "chest":
+				teamChest(player)
+			if arg-1 isn't "top", "create", "leave", "disband", "invite", "accept", "info", "kick", "join", "ff", "chest", "chat" or "color":
+				teamHelp(player)
+		else:
+			teamHelp(player)
+			
+function teamHelp(p: player):
+			send "" to {_p}
+			send "       %{@prefix}% Help" to {_p}
+			send "" to {_p}
+			send " <##Ffc0cb>/team create <team> &7- Create a Team" to {_p}
+			send " <##Ffc0cb>/team color <color> &7- Set ur teams color" to {_p}
+			send " <##Ffc0cb>/team leave &7- Leave a Team" to {_p}
+			send " <##Ffc0cb>/team disband &7- Disband a Team" to {_p}
+			send " <##Ffc0cb>/team invite <player> &7- Invite a Player To Your Team" to {_p}
+			send " <##Ffc0cb>/team accept <team> &7- Accept a team invtie" to {_p}
+			send " <##Ffc0cb>/team info <team> &7- Check a Team's Info" to {_p}
+			send " <##Ffc0cb>/team kick <player> &7- Kick a Player From Your Team" to {_p}
+			send " <##Ffc0cb>/team chat &7- Toggle Bewteen Team and Public Chat" to {_p}
+			send " <##Ffc0cb>/team top &7- Check The Teams Leaderboard" to {_p}
+			send "" to {_p}
+					
+function teamCreate(p: player, team: string):
+	if {teams::teamofplayer::%{_p}%} isn't set:
+		if "%{_team}%" matches "[A-Za-z]+":
+			if {teams::*} does not contain "%{_team}%":
+				set {teams::teamofplayer::%{_p}%} to {_team}
+				add {_team} to {teams::*}
+				add {_p} to {teams::%{_team}%::players::*}
+				set {teams::%{_team}%::roles::owner} to {_p}
+				set {teams::%{_team}%::friendlyfire} to false
+				set {teams::%{_team}%::points} to 0
+				set {teams::%{_team}%::kills} to 0
+				set {teams::%{_team}%::deaths} to 0
+				send "%{@prefix}% &e&l%{_team}% &fhas been created." to {_p}
+			else:
+				send "%{@prefix}% &cA team with this name already exist." to {_p}
+		else:
+			send "%{@prefix}% &cThe team name must only contain letters!" to {_p}
+	else:
+		send "%{@prefix}% &cYou are already in a team!" to {_p}
+		
+function teamLeave(p: player):
+	if {teams::teamofplayer::%{_p}%} is set:
+		if {teams::%{teams::teamofplayer::%{_p}%}%::roles::owner} isn't {_p}:
+			delete {teams::teamofplayer::%{_p}%}
+			remove {_p} from {teams::%{_team}%::players::*}
+			send "%{@prefix}% &aYou have left the team!" to {_p}
+			loop all players:
+				if {teams::%{_team}%::players::*} contains "%loop-player%":
+					send "%{@prefix}% &c%{_p}% has left the team!" to loop-player
+		else:
+			send "%{@prefix}% &cYou own the team. Please disband the team if you wish to leave!" to {_p}
+	else:
+		send "%{@prefix}% &cYou are not in a team!" to {_p}
+		
+function teamColor(p: player, color: string):
+	if {teams::teamofplayer::%{_p}%} is set:
+		if {teams::%{teams::teamofplayer::%{_p}%}%::roles::owner} is {_p}:
+			if {_color} is "cyan":
+				set {teams::teamofplayer::%{_p}%::color} to "cyan"
+				send "%{@prefix}% &aYou have set the team color to &bCyan&a!" to {_p}
+			else if {_color} is "lightred":
+				set {teams::teamofplayer::%{_p}%::color} to "lightred"
+				send "%{@prefix}% &aYou have set the team color to &cLight Red&a!" to {_p}
+			else if {_color} is "darkred":
+				set {teams::teamofplayer::%{_p}%::color} to "darkred"
+				send "%{@prefix}% &aYou have set the team color to &4Dark Red&a!" to {_p}
+			else if {_color} is "green":
+				set {teams::teamofplayer::%{_p}%::color} to "green"
+				send "%{@prefix}% &aYou have set the team color to &aGreen&a!" to {_p}
+			else if {_color} is "blue":
+				set {teams::teamofplayer::%{_p}%::color} to "blue"
+				send "%{@prefix}% &aYou have set the team color to &9Blue&a!" to {_p}
+			else if {_color} is "pink":
+				set {teams::teamofplayer::%{_p}%::color} to "pink"
+				send "%{@prefix}% &aYou have set the team color to &dPink&a!" to {_p}
+			else if {_color} is "purple":
+				set {teams::teamofplayer::%{_p}%::color} to "purple"
+				send "%{@prefix}% &aYou have set the team color to &5Purple&a!" to {_p}
+			else if {_color} is "gray":
+				set {teams::teamofplayer::%{_p}%::color} to "gray"
+				send "%{@prefix}% &aYou have set the team color to &7Gray&a!" to {_p}
+			else if {_color} is "yellow":
+				set {teams::teamofplayer::%{_p}%::color} to "yellow"
+				send "%{@prefix}% &aYou have set the team color to &eYellow&a!" to {_p}
+			else if {_color} is "black":
+				set {teams::teamofplayer::%{_p}%::color} to "black"
+				send "%{@prefix}% &aYou have set the team color to &0Black&a!" to {_p}
+			else if {_color} is "white":
+				set {teams::teamofplayer::%{_p}%::color} to "white"
+				send "%{@prefix}% &aYou have set the team color to &fWhite&a!" to {_p}
+		else:
+			send "%{@prefix}% &cYou need to be the team owner to set the team color!" to {_p}
+	else:
+		send "%{@prefix}% &cYou are not in a team!" to {_p}
+
+function teamDisband(p: player):
+	if {teams::teamofplayer::%{_p}%} is set:
+		if {teams::%{teams::teamofplayer::%{_p}%}%::roles::owner} is {_p}:
+			set {_team} to {teams::teamofplayer::%{_p}%}
+			loop {teams::%{teams::teamofplayer::%{_p}%}%::players::*}:
+				delete {teams::teamofplayer::%loop-value%}
+			delete {teams::teamofplayer::%{_p}%}
+			delete {teams::%{_team}%::*}
+			remove {_team} from {teams::*}
+			send "%{@prefix}% &aYou have disbanded the team!" to {_p}
+		else:
+			send "%{@prefix}% &cYou need to be the team owner to disband the team!" to {_p}
+	else:
+		send "%{@prefix}% &cYou are not in a team!" to {_p}
+		
+function teamInvite(p: player, invplayer: string):
+	set {_teaminvitedplayer} to {_invplayer} parsed as player
+	if {teams::teamofplayer::%{_p}%} is set:
+		if {teams::teamofplayer::%{_teaminvitedplayer}%} isn't set:
+			if {teams::%{teams::teamofplayer::%{_p}%}%::roles::owner} is {_p}:
+				if {teams::%{teams::teamofplayer::%{_p}%}%::players::*} does not contain "%{_invplayer}%":
+					if {teams::%{teams::teamofplayer::%{_p}%}%::invited::%{_invplayer}%} isn't "true":
+						if {_teaminvitedplayer} is online:
+							set {teams::%{teams::teamofplayer::%{_p}%}%::invited::%({_invplayer} parsed as player)%} to "true"
+							send "%{@prefix}% &aYou have invited %{_invplayer}%!" to {_p}
+							send "%{@prefix}% &aYou have been invited to join %{teams::teamofplayer::%{_p}%}% do /team join %{teams::teamofplayer::%{_p}%}% to join the team! You have 3 minutes to accept." to {_teaminvitedplayer}
+							wait 3 minutes
+							delete {teams::%{teams::teamofplayer::%{_p}%}%::invited::%{_invplayer}%}
+							send "%{@prefix}% &cYour invite to join %{teams::teamofplayer::%{_p}%}% has expired!" to {_teaminvitedplayer}
+						else:
+							send "%{@prefix}% &cThis player is not online!" to {_p}
+					else:
+						send "%{@prefix}% &cThis player has already been invited!" to {_p}
+				else:
+					send "%{@prefix}% &cThis player is already in your team!" to {_p}
+			else:
+				send "%{@prefix}% &cYou are not the owner!" to {_p}
+		else:
+			send "%{@prefix}% &cThis player is already in a team!" to {_p}
+	else:
+		send "%{@prefix}% &cYou are not in a team!" to {_p}
+
+function teamAccept(p: player, teaminvited: string):
+	if {teams::teamofplayer::%{_p}%} isn't set:
+		if {teams::%{_teaminvited}%::invited::%{_p}%} is "true":
+			remove player from {teams::%{teams::teamofplayer::%{_p}%}%::players::*}
+			remove player from {teams::%{teams::teamofplayer::%{_p}%}%::roles::member::*}
+			delete {teams::%{teams::teamofplayer::%{_p}%}%::invited::%{_p}%}
+			add {_p} to {teams::%{_teaminvited}%::players::*}
+			add {_p} to {teams::%{_teaminvited}%::roles::member::*}
+			set {teams::teamofplayer::%{_p}%} to {_teaminvited}
+			loop all players:
+				if {teams::teamofplayer::%loop-player%} is {_teaminvited}:
+					send "%{@prefix}% &a%{_p}% has joined the team!" to loop-player
+		else:
+			send "%{@prefix}% &cThis team either does not exist or you do not have an invite from them!" to {_p}
+	else:
+		send "%{@prefix}% &cYou are already in a team!" to {_p}
+		
+function personalteamInfo(p: player, team: string):
+	if {teams::teamofplayer::%{_p}%} is set:
+		open (chest inventory with 3 rows named "%{@prefix}% Team Info") to {_p}
+		set slot 18 of {_p}'s current inventory to skull of ("AX1002588" parsed as an offline player) named "<##e86100>&lDEATH<##e86100>(s): %{teams::%{teams::teamofplayer::%{_p}%}%::deaths}%"
+		set slot 19 of {_p}'s current inventory to black stained glass pane named "&7"
+		set slot 20 of {_p}'s current inventory to black stained glass pane named "&7"
+		set slot 21 of {_p}'s current inventory to black stained glass pane named "&7"
+		set slot 22 of {_p}'s current inventory to gold ingot named "<##Ffd700>&lPOINT<##Ffd700>(s): %{teams::%{teams::teamofplayer::%{_p}%}%::points}%"
+		set slot 23 of {_p}'s current inventory to black stained glass pane named "&7"
+		set slot 24 of {_p}'s current inventory to black stained glass pane named "&7"
+		set slot 25 of {_p}'s current inventory to black stained glass pane named "&7"
+		set slot 26 of {_p}'s current inventory to diamond sword named "<##ff0000>&lKILL<##ff0000>(s): %{teams::%{teams::teamofplayer::%{_p}%}%::kills}%"
+		set {_slot} to 0
+		loop all players:
+			if {teams::teamofplayer::%loop-player%} is {teams::teamofplayer::%{_p}%}:
+				if {_slot} isn't more than 17:
+					if {teams::%{teams::teamofplayer::%loop-player%}%::roles::member::*} contains "%loop-player%":
+						set slot {_slot} of {_p}'s current inventory to skull of ("%loop-player%" parsed as an offline player) named "&7%loop-player%" with lore "&7Role: Member"
+					if  {teams::%{teams::teamofplayer::%loop-player%}%::roles::owner} is loop-player:
+						set slot {_slot} of {_p}'s current inventory to skull of ("%loop-player%" parsed as an offline player) named "&7%loop-player%" with lore "&6Role: Owner"
+					add 1 to {_slot}
+	else:
+		send "%{@prefix}% &cYou're not in a team. To check a different team's info please specify the team." to {_p}
+					
+function specificteamInfo(p: player, team: string):
+	if {teams::*} contains "%{_team}%":
+		open (chest inventory with 3 rows named "%{@prefix}% Team Info") to {_p}
+		set slot 18 of {_p}'s current inventory to skull of ("AX1002588" parsed as an offline player) named "<##e86100>&lDEATH<##e86100>(s): %{teams::%{_team}%::deaths}%"
+		set slot 19 of {_p}'s current inventory to black stained glass pane named "&7"
+		set slot 20 of {_p}'s current inventory to black stained glass pane named "&7"
+		set slot 21 of {_p}'s current inventory to black stained glass pane named "&7"
+		set slot 22 of {_p}'s current inventory to gold ingot named "<##Ffd700>&lPOINT<##Ffd700>(s): %{teams::%{_team}%::points}%"
+		set slot 23 of {_p}'s current inventory to black stained glass pane named "&7"
+		set slot 24 of {_p}'s current inventory to black stained glass pane named "&7"
+		set slot 25 of {_p}'s current inventory to black stained glass pane named "&7"
+		set slot 26 of {_p}'s current inventory to diamond sword named "<##ff0000>&lKILL<##ff0000>(s): %{teams::%{_team}%::kills}%"
+		set {_slot} to 0
+		loop all players:
+			if {teams::teamofplayer::%loop-player%} is {_team}:
+				if {_slot} isn't more than 17:
+					if {teams::%{teams::teamofplayer::%loop-player%}%::roles::member::*} contains "%loop-player%":
+						set slot {_slot} of {_p}'s current inventory to skull of ("%loop-player%" parsed as an offline player) named "&7%loop-player%" with lore "&7Role: Member"
+					if  {teams::%{teams::teamofplayer::%loop-player%}%::roles::owner} is loop-player:
+						set slot {_slot} of {_p}'s current inventory to skull of ("%loop-player%" parsed as an offline player) named "&7%loop-player%" with lore "&6Role: Owner"
+					add 1 to {_slot}
+	else:
+		send "%{@prefix}% &cThat team does not exist!" to {_p}
+		
+on inventory click:
+	if name of current inventory of event-player is "%{@prefix}% Team Info":
+		cancel event
+		
+function teamKick(p: player, kickedp: string):
+	if {teams::teamofplayer::%{_p}%} is set:
+		if {teams::%{teams::teamofplayer::%{_p}%}%::roles::owner} is {_p}:
+			if {_kickedp} isn't {_p}:
+				if {teams::%{teams::teamofplayer::%{_p}%}%::players::*} contains {_kickedp} parsed as a player:
+					send "%{@prefix}% &c%{_kickedp}% &fhas been &ckicked &ffrom the team!" to {teams::%{teams::teamofplayer::%{_p}%}%::players::*}
+					remove {_kickedp} parsed as a player from {teams::%{teams::teamofplayer::%{_p}%}%::roles::member::*}
+					remove {_kickedp} parsed as a player from {teams::%{teams::teamofplayer::%{_p}%}%::players::*}
+					delete {teams::teamofplayer::%{_kickedp} parsed as a player%}
+				else:
+					send "%{@prefix}% &cThis player isn't in your team!" to {_p}
+			else:
+				send "%{@prefix}% &cYou can't kick yourself!" to {_p}
+		else:
+			send "%{@prefix}% &cYou do not have permission to kick this player from your team!" to {_p}
+	else:
+		send "%{@prefix}% &cYou're not in a team!" to {_p}
+		
+on death of a player:
+	if {teams::teamofplayer::%attacker%} is set:
+		add 1 to {teams::%{teams::teamofplayer::%attacker%}%::points}
+		add 1 to {teams::%{teams::teamofplayer::%attacker%}%::kills}
+		send "%{@prefix}% &fYour team has gained &a1 point &fbecause %attacker% has killed %victim%." to {teams::%{teams::teamofplayer::%attacker%}%::players::*}
+	if {teams::teamofplayer::%victim%} is set:
+		subtract 1 from {teams::%{teams::teamofplayer::%victim%}%::points}
+		add 1 to {teams::%{teams::teamofplayer::%victim%}%::deaths}
+		send "%{@prefix}% &fYour team has lost &c1 point &fbecause %victim% has died." to {teams::%{teams::teamofplayer::%victim%}%::players::*}
+				
+function teamChat(p: player):
+	if {teams::teamofplayer::%{_p}%} is set:
+		if {team::chat::%{_p}%} isn't set:
+			set {team::chat::%{_p}%} to true
+			send "%{@prefix}% &aYour chat has been set to &bteam chat&a!" to {_p}
+		else if {team::chat::%{_p}%} is set:
+			delete {team::chat::%{_p}%}
+			send "%{@prefix}% &aYour chat has been set to &fpublic chat&a!" to {_p}
+
+on chat:
+	if {chat::%player%} is "team":
+		cancel event
+		send "%{@prefix}% Team Chat - %player%: %message%" to {teams::%{teams::teamofplayer::%player%}%::players::*}
+		
+function teamTop(p: player):
+	loop {teams::*}:
+		set {_points::%loop-value%} to {teams::%loop-value%::points}
+	set {_top::*} to sorted indices of {_points::*} in descending order
+	loop 10 times:
+		add {_top::%loop-value%} to {_top_10::*}
+	send "" to {_p}	
+	send "       %{@prefix}% Team Top" to {_p}
+	loop {_top_10::*}:
+		add 1 to {_n}
+		send "          <##Ffc0cb>%{_n}%&7. <##Ffc0cb>%{_top_10::%{_n}%}%&7: <##Ffc0cb>%{_points::%{_top_10::%{_n}%}%}% " to {_p}
+	send "" to {_p}	
+		
+function teamChest(p: player):
+	if {teams::teamofplayer::%{_p}%} is set:
+		loop all players:
+			if {teams::%{teams::teamofplayer::%{_p}%}%::players::*} contains loop-player:
+				if loop-player's current inventory's name = "%{@prefix}% Team Chest":
+					send "%{@prefix}% &cSomeone already has your team chest open!" to {_p}
+					stop
+		open (chest inventory with 6 rows named "%{@prefix}% Team Chest") to {_p}
+		set {_slot} to 0
+		loop {teams::%{teams::teamofplayer::%{_p}%}%::chest::items::*}:
+			set slot {_slot} of {_p}'s current inventory to {teams::%{teams::teamofplayer::%{_p}%}%::chest::items::%{_slot}%}
+			add 1 to {_slot}
+			
+function teamFF(p: player):
+	if {teams::teamofplayer::%{_p}%} is set:
+		if {teams::%{teams::teamofplayer::%{_p}%}%::roles::owner} is {_p}:
+			if {teams::%{teams::teamofplayer::%{_p}%}%::friendlyfire} is false:
+				set {teams::%{teams::teamofplayer::%{_p}%}%::friendlyfire} to true
+				send "%{@prefix}% &fFriendly Fire is now &aenabled." to {_p}
+			else if {teams::%{teams::teamofplayer::%{_p}%}%::friendlyfire} is true:
+				send "%{@prefix}% &fFriendly Fire is now &cdisabled." to {_p}
+				set {teams::%{teams::teamofplayer::%{_p}%}%::friendlyfire} to false
+		else:
+			send "%{@prefix}% &cYou are not the leader of your team." to {_p}
+	
+on inventory close:
+	if name of player's current inventory is "%{@prefix}% Team Chest":
+		set {_slot} to 0
+		loop 54 times:
+			set {teams::%{teams::teamofplayer::%player%}%::chest::items::%{_slot}%} to slot {_slot} of current inventory of player
+			add 1 to {_slot}
+
+
+
+on tab complete:
+	event-string is "/team":
+		set tab completions for position 1 to "create", "chest", "invite", "disband", "info", "accept", "kick", "chat", "top", "ff" and "leave"
+		set tab completions for position 2 to "cyan", "green", "darkred", "lightred", "pink", "purple", "gray", "yellow", "black", "white" and "blue"
+		
+   
+   
+on damage of player:
+	attacker is player
+	if {teams::teamofplayer::%attacker%} = {teams::teamofplayer::%victim%}:
+		if {teams::%{teams::teamofplayer::%attacker%}%::friendlyfire} is false:
+			cancel event
+			send "%{@prefix}% &cYou cannot damage your teammates." to attacker
+	

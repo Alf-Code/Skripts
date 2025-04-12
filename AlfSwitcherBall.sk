@@ -1,0 +1,17 @@
+
+on shoot:
+	if name of shooter's tool = "&e&lSwitcher Ball":
+		set item cooldown of shooter's tool for shooter to 3 seconds
+		set metadata value "switcher" of event-projectile to true
+	
+on projectile collide:
+	event-projectile is a snowball
+	metadata value "switcher" of event-projectile is true
+	set {_shootersloc} to location of shooter of event-projectile
+	set {_victimsloc} to location of event-entity
+	teleport shooter of event-projectile to {_victimsloc}
+	teleport event-entity to {_shootersloc}
+	play sound "entity.enderman.teleport" with volume 1 with pitch 1.5 to shooter of event-projectile
+	play sound "entity.enderman.teleport" with volume 1 with pitch 1.5 to event-entity
+	send "&cYou have been switched by &f%shooter of event-projectile%&c." to event-entity
+	send "&aYou successfully switched locations with &f%event-entity%&c." to shooter of event-projectile

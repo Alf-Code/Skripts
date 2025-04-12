@@ -1,0 +1,299 @@
+options:
+	prefix:	<##FB08DD>sʜᴜʟᴋᴇʀ ʀᴏᴏᴍ &8➠ &r
+	permmsg: "{@prefix}&cOnly Admins can use this command."
+# |--------------------------------------------------------------------------------------------------------------------------|
+# |                                                                                                                          |
+# |                                                                                                                          |		
+# |                                                    COMMANDS                                                              |	
+# |                                                                                                                          |	
+# |                                                                                                                          |
+# |--------------------------------------------------------------------------------------------------------------------------|
+
+command /addshulkerenterblock:
+	permission: op
+	permission message: {@permmsg}
+	trigger:
+		if {addingshulkerleaveblock::%player's uuid%} is true:
+			set {addingshulkerleaveblock::%player's uuid%} to false
+		if {removingshulkerblock::%player's uuid%} is true:
+			set {removingshulkerblock::%player's uuid%} to false
+		if {addingshulkerenterblock::%player's uuid%} is true:
+			send "{@prefix}&cYou are already in enter block creation mode! &7Type &c&lcancel &7to exit." to player
+		else:
+			set {addingshulkerenterblock::%player's uuid%} to true
+			send "{@prefix}&7Shulker room enter block creation mode enabled! Right-click a block to set it as an enter block." to player
+			send "{@prefix}&7(Type &c&lcancel &7in chat to exit this mode)" to player
+	
+
+command /addshulkerleaveblock:
+	permission: op
+	permission message: {@permmsg}
+	trigger:
+		if {removingshulkerblock::%player's uuid%} is true:
+			set {removingshulkerblock::%player's uuid%} to false
+		if {addingshulkerenterblock::%player's uuid%} is true:
+			set {addingshulkerenterblock::%player's uuid%} to false
+		if {addingshulkerleaveblock::%player's uuid%} is true:
+			send "{@prefix}&cYou are already in leave block creation mode! &7Type &c&lcancel &7to exit." to player
+		else:
+			set {addingshulkerleaveblock::%player's uuid%} to true
+			send "{@prefix}&7Shulker room leave block creation mode enabled! Right-click a block to set it as a leave block." to player
+			send "{@prefix}&7(Type &c&lcancel &7in chat to exit this mode)" to player
+	
+	
+command /setshulkerspawn <integer>:
+	permission: op
+	permission message: {@permmsg}
+	trigger:
+		set {_currentlocation} to player's location
+		if arg-1 is not a number:
+			send "{@prefix}&cInvalid argument. You must use a number." to player 
+		if arg-1 <= 0:
+			send "{@prefix}&cInvalid room number. It must be greater than 0." to player
+			stop
+		if {shulkerroomspawn::%arg-1%} is set:
+			if distance between {_currentlocation} and {shulkerroomspawn::%arg-1%} > 5:
+				send "{@prefix}&cRoom number %arg-1% already has a spawn set elsewhere. &7(Type &7&confirm &7in chat to confirm this change)." to player
+				set {confirmingroom::%player's uuid%} to arg-1
+				set {confirminglocation::%player's uuid%} to {_currentlocation}
+				stop
+		set {shulkerroomspawn::%arg-1%} to {_currentlocation}
+		set {shulkerroom::%arg-1%} to false
+		send "{@prefix}&7Successfully set spawn for shulker room &e%arg-1%." to player
+			
+command /removeshulkerblock:
+	permission: op
+	permission message: {@permmsg}
+	trigger: 
+		if {addingshulkerenterblock::%player's uuid%} is true:
+			set {addingshulkerenterblock::%player's uuid%} to false
+		if {addingshulkerleaveblock::%player's uuid%} is true:
+			set {addingshulkerleaveblock::%player's uuid%} to false
+		if {removingshulkerblock::%player's uuid%} is true:
+			send "{@prefix}&cYou are already in shulker block teleporter removal mode! &7Type &c&lcancel &7to exit." to player
+		else:
+			set {removingshulkerblock::%player's uuid%} to true
+			send "{@prefix}&7Shulker room block remove mode enabled! Right-click a block to remove it as a teleporter block." to player
+			send "{@prefix}&7(Type &c&lcancel &7in chat to exit this mode)" to player
+	
+	
+command /shulkerroom:
+	aliases: /room, /shulker
+	permission: skript.shulkerroom.use
+	trigger:
+		if {inshulkerroom::%player's uuid%} is set:
+			open chest inventory with 5 rows named "&c&lLeave Shulker Room" to player
+			loop 45 times:
+				set slot loop-value of player's current inventory to black stained glass pane named " "
+			set slot 10, 11, 12, 19, 20, 21, 28, 29, 30 of player's current inventory to green wool named "&7&lConfirm" 
+			set slot 14, 15, 16, 23, 24, 25, 32, 33, 34 of player's current inventory to red wool named "&c&lCancel"
+			set slot 4 of player's current inventory to barrier named "&cCaution: You will not be refunded for any items left behind in a shulker room."
+			set slot 0 of player's current inventory to black stained glass pane named " "
+			stop
+		else:	
+			set {_roomnumber} to 1
+			loop 20 times:
+				if {shulkerroom::%{_roomnumber}%} is false:
+					set {_x} to player's x coordinate
+					set {_y} to player's y coordinate
+					set {_z} to player's z coordinate
+					loop 6 times:
+						set {_timeremaining} to 6 - loop-value-2
+						if {_x} is player's x-coordinate:
+							if {_y} is player's y-coordinate:
+								if {_z} is player's z-coordinate:
+									if {_timeremaining} isn't 0:
+										send "&7You will be teleported in <##E1D9FC>%{_timeremaining}%&7 second(s). Please do not move!" to player
+										send action bar "&7You will be teleported in <##E1D9FC>%{_timeremaining}%&7 second(s). Please do not move!" to player
+										play sound "entity.experience_orb.pickup" with volume 0.5 to player
+										wait 1 second
+								else:			
+									send "&cYou moved! Teleportation canceled." to player
+									play sound "entity.endermite.hurt" with volume 0.5 to player
+									stop
+							else:			
+								send "&cYou moved! Teleportation canceled." to player
+								play sound "entity.endermite.hurt" with volume 0.5 to player
+								stop
+						else:			
+							send "&cYou moved! Teleportation canceled." to player
+							play sound "entity.endermite.hurt" with volume 0.5 to player
+							stop
+					teleport player to {shulkerroomspawn::%{_roomnumber}%}
+					send "&7Teleported!" to player
+					send action bar "&7Teleported!" to player
+					play sound "entity.enderman.teleport" with volume 0.5 to player		
+					set {shulkerroom::%{_roomnumber}%} to true
+					set {inshulkerroom::%player's uuid%} to {_roomnumber}
+					send "{@prefix}&7Successfully teleported to Shulker Room &e%{_roomnumber}%." to player
+					stop
+				else:
+					add 1 to {_roomnumber}
+			send "{@prefix}&cThere are currently no available shulker rooms. Please try again later." to player
+			stop
+
+command /fixshulkerroom <integer>:
+	permission: op 
+	trigger:
+		if {shulkerroom::%arg-1%} is set:
+			if {shulkerroom::%arg-1%} is true:
+				set {shulkerroom::%arg-1%} to false
+				send "{@prefix}&7Successfully marked Shulker Room %arg-1% as empty." to player
+			else:
+				send "{@prefix}&cShulker Room %arg-1% is already marked as empty." to player
+		else:
+			send "{@prefix}&cShulker Room %arg-1% does not exist." to player
+		
+# |--------------------------------------------------------------------------------------------------------------------------|
+# |                                                                                                                          |
+# |                                                                                                                          |		
+# |                                         TELEPORTING AND ADDING TP BLOCKS                                                 |	
+# |                                                                                                                          |	
+# |                                                                                                                          |
+# |--------------------------------------------------------------------------------------------------------------------------|
+
+
+
+on rightclick:
+	if event-block is set:
+		if {shulkerroomenterblocks::*} contains event-block:
+			if {addingshulkerenterblock::%player's uuid%} is true:
+				send "{@prefix}&cThis block is already a shulker room enter block." to player
+				set {addingshulkerenterblock::%player's uuid%} to false
+				stop
+			else if {removingshulkerblock::%player's uuid%} is true:
+				remove event-block from {shulkerroomenterblocks::*}
+				send "{@prefix}&7Successfully removed a shulker room enter block." to player
+				stop
+			else:
+				set {_roomnumber} to 1
+				loop 20 times:
+					if {shulkerroom::%{_roomnumber}%} is false:
+						teleport player to {shulkerroomspawn::%{_roomnumber}%}
+						set {shulkerroom::%{_roomnumber}%} to true
+						set {inshulkerroom::%player's uuid%} to {_roomnumber}
+						send "{@prefix}&7Successfully teleported to Shulker Room &e%{_roomnumber}%." to player
+						stop
+					else:
+						add 1 to {_roomnumber}
+				send "{@prefix}&cThere are currently no available shulker rooms. Please try again later." to player
+				stop
+		else if {addingshulkerenterblock::%player's uuid%} is true:		
+			add event-block to {shulkerroomenterblocks::*}
+			set {addingshulkerenterblock::%player's uuid%} to false
+			send "{@prefix}&7Successfully added a shulker room enter block." to player
+			stop
+		else if {shulkerroomleaveblocks::*} contains event-block:
+			if {addingshulkerleaveblock::%player's uuid%} is true:
+				send "{@prefix}&cThis block is already a shulker room leave block." to player
+				set {addingshulkerleaveblock::%player's uuid%} to false
+				stop
+			else if {removingshulkerblock::%player's uuid%} is true:
+				remove event-block from {shulkerroomleaveblocks::*}
+				send "{@prefix}&7Successfully removed a shulker room leave block." to player
+				stop
+			else:
+				open chest inventory with 5 rows named "&c&lLeave Shulker Room" to player
+				loop 45 times:
+					set slot loop-value of player's current inventory to black stained glass pane named " "
+				set slot 10, 11, 12, 19, 20, 21, 28, 29, 30 of player's current inventory to green wool named "&7&lConfirm" 
+				set slot 14, 15, 16, 23, 24, 25, 32, 33, 34 of player's current inventory to red wool named "&c&lCancel"
+				set slot 4 of player's current inventory to barrier named "&cCaution: You will not be refunded for any items left behind in a shulker room."
+				set slot 0 of player's current inventory to black stained glass pane named " "
+				stop
+		else if {addingshulkerleaveblock::%player's uuid%} is true:
+			add event-block to {shulkerroomleaveblocks::*}
+			set {addingshulkerleaveblock::%player's uuid%} to false
+			send "{@prefix}&7Successfully added a shulker room leave block." to player
+			stop
+				
+				
+				
+# |--------------------------------------------------------------------------------------------------------------------------|
+# |                                                                                                                          |
+# |                                                                                                                          |		
+# |                                               ADDITIONAL STUFF                                                           |	
+# |                                                                                                                          |	
+# |                                                                                                                          |
+# |--------------------------------------------------------------------------------------------------------------------------|				
+		
+				
+on inventory click:
+	if event-inventory's name is "&c&lLeave Shulker Room":
+		cancel event
+		if event-item is green wool:
+			teleport player to {spawn}
+			set {shulkerroom::%{inshulkerroom::%player's uuid%}%} to false
+			delete {inshulkerroom::%player's uuid%}
+			close player's inventory
+			send "{@prefix}&7Successfully teleported to spawn." to player
+		if event-item is red wool:
+			close player's inventory
+			
+on place:
+	if player has permission "op":
+		stop
+	if {inshulkerroom::%player's uuid%} is set:
+		if "%event-block%" contains "shulker":
+			stop
+		else:
+			cancel event
+			send "{@prefix}&cYou can only place Shulker Boxes in the shulker room." to player
+			
+on break:
+	if player has permission "op":
+		stop
+	if {inshulkerroom::%player's uuid%} is set:
+		if "%event-block%" contains "shulker":
+			stop
+		else:
+			cancel event
+			send "{@prefix}&cYou can only mine Shulker Boxes in the shulker room." to player
+
+on break:
+	if {shulkerroomenterblocks::*} contains event-block:
+		cancel event
+		send "{@prefix}&cYou cannot break this block." to player
+	if {shulkerroomleaveblocks::*} contains event-block:
+		cancel event
+		send "{@prefix}&cYou cannot break this block." to player
+		
+on rightclick:
+	if {inshulkerroom::%player's uuid%} is set:
+		if "%event-block%" contains "trapdoor":
+			cancel event
+			send "{@prefix}&cYou cannot interact with this inside a shulker room." to player
+		
+	
+on chat:
+	if message is "cancel":
+		cancel event
+		if {addingshulkerenterblock::%player's uuid%} is true:	
+			delete {addingshulkerenterblock::%player's uuid%}
+			send "{@prefix}&7Shulker block set enter block mode successfully cancelled." to player
+		if {addingshulkerleaveblock::%player's uuid%} is true:
+			delete {addingshulkerleaveblock::%player's uuid%}
+			send "{@prefix}&7Shulker block set leave block mode successfully cancelled." to player
+		if {removingshulkerblock::%player's uuid%} is true:
+			delete {removingshulkerblock::%player's uuid%}
+			send "{@prefix}&7Shulker block removal mode successfully cancelled." to player
+	if {confirmingroom::%player's uuid%} is set:
+		if message is "confirm":
+			set {shulkerroomspawn::%{confirmingroom::%player's uuid%}%} to {confirminglocation::%player's uuid%}
+			set {shulkerroom::%{confirmingroom::%player's uuid%}%} to false
+			send "{@prefix}&7Successfully set spawn for shulker room &e%{confirmingroom::%player's uuid%}%." to player
+			delete {confirmingroom::%player's uuid%}
+			delete {confirminglocation::%player's uuid%}
+				
+on command:
+	if command doesn't contain "room" or "pv" or "playervault" or "vault" or "ec" or "enderchest":
+		if {inshulkerroom::%player's uuid%} is set:
+			cancel event
+			send "{@prefix}&cYou cannot use that command here."
+
+on quit: 
+	if {inshulkerroom::%player's uuid%} is set:
+		teleport player to {spawn}
+		set {shulkerroom::%{inshulkerroom::%player's uuid%}%} to false
+		delete {inshulkerroom::%player's uuid%}
+	
